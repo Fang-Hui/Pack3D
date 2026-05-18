@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # ============================================================
+  # 1. Streamlit 应用（端口映射到本地，由宿主机全局 nginx 反向代理）
+  # ============================================================
+  app:
+    build: .
+    container_name: pack3d-app
+    restart: always
+    # 核心修改：将容器内的 8501 端口暴露到宿主机的 127.0.0.1:8501
+    ports:
+      - "127.0.0.1:8501:8501"
+    networks:
+      - pack3d-net
+    environment:
+      - TZ=Asia/Shanghai
+      - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=50
+      # 修复了等号后面的空格。如果密码包含 $ 符号，建议像下面这样用单引号包裹整个键值对，或把 $ 写成 $$
+      - 'APP_PASSWORD=110119Abc'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ============================================================
+# 内部网络
+# ============================================================
+networks:
+  pack3d-net:
+    driver: bridge
